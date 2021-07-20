@@ -1,0 +1,2027 @@
+// @jornades_bot  http:/t.me/jornades_bot 
+
+var token = "";  // Api token del vostre bot que obtindreu al BotFather 
+var telegramUrl = "https://api.telegram.org/bot" + token;
+var webAppUrl = "";  // Url de l'escript de Google 
+var ssId = "";  // Id del full de càlcul que esteui treballant 
+var ID_canal = ""; 
+var id_grup = ""; 
+var folderId = "";
+var id_grup = "";
+
+//https://script.google.com/macros/s/AKfycbw7/exec?accio=grup&text=Hola_grup
+
+
+// https://api.telegram.org/botAPI_KEY/getUpdates
+// https://api.telegram.org/bot1861632034:AA/getUpdates
+
+
+//https://api.telegram.org/botAPI_KEY/setWebhook?url=url_WebAppUrl 
+// https://api.telegram.org/bot/deleteWebhook?url=https://script.google.com/macros/s/AKfycbxrBtN/exec
+// https://api.telegram.org/bot/setWebhook?url=https://script.google.com/macros/s/AKfycbxrBtN/exec
+
+/* Opcions de comandes del bot 
+ajuda - Informació sobre el bot 
+info - Informació sobr eles Jornades 
+tallers - Tallers assignats 
+detall_programacio - Mostra els tallers de les IV jornades i la seva descripció
+entrada - Codi QR per entrar o validar-se 
+certificat - Certificat d'assistencia 
+idioma - Selecciona d'idioma de comunicació del xatot
+iden - Identificació 
+meteo - Mosta les dades climàtiques
+ofertes_treball - Mostra les ofertes de treball
+questionari - Examen tipus questionari
+menu - Mostra un menú d'accions
+drive - Mostra una carpeta amb enllaços a materials
+notes - Consulta les notes obtingudes al questionari
+audio - Enviar fitxers d'audio
+localitzacio - Mostra la localització del centre
+enviar_mapa - Envia el mapa per correu
+mapa_restaurants - Mostra restaurants per menjar
+orla - Orla dels grups de classe
+agenda - Mostra els events del calendari
+prototip - Mostra el prototip de bot
+cursos - Mostra els cursos de google classroom
+evidencies - Mostra les evidències del tema 4
+album - Album d'imatges
+assistent - Estructura d'arbre
+assistent2 - Estructura temàtica  
+assistent2b - Estructura temàtica opció 2
+
+*/
+
+function myFunction(){
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants"); 
+  var dades = sh.getDataRange().getValues();  
+  
+  for(i in dades)
+  {
+    var row = dades[i];
+    var num_usuari = row[13]; 
+    var idioma = row[12]; 
+    
+    
+    Logger.log(idioma + "-" + num_usuari);
+    if(num_usuari == 1) 
+    {
+      sendText(id,escriu_frase("idioma:" + idioma,idioma));
+    }
+  }
+}
+
+var key = 'HqJdAJ';
+
+/*1.- Creació de l'Applet de IFTTT*/
+function trucar(id,idioma)
+             {
+             
+       var data = {
+         Value1: "Avis d'averia de PC",
+         Value2: "Aula 24 PC-5"
+          }
+
+    var url= "https://maker.ifttt.com/trigger/truca_mobil/with/key/" + key;
+   var response = UrlFetchApp.fetch( url + '/', data);
+
+  sendText(id,"S'ha enviat trucada");
+
+ }
+
+
+
+
+
+
+
+/*
+5.2.Creació d'un pseudo-assistent 
+Model A.- Estructura d'arbre
+*/
+
+function assistent(id_usuari,text,idioma)
+{
+ 
+ 
+ var t = text.split(' ');  //Separem la comanda de la línia
+ var index = parseInt(t[1]-1)  || 0 ;  // Si  te línia resta 1 perque les files comencen pel 0 si no te línia posa un 0
+ 
+   var sh = SpreadsheetApp.openById(ssId).getSheetByName("Assistent"); // Connecta el full d'Assistent
+   var dades = sh.getDataRange().getValues(); 
+ 
+  var row=dades[index];  // Carrega la fila que toca
+  var tipus = row[0];    // El tipus P o R  es a la columna 0
+ 
+  var enunciat = row[1];  // L'enunciat a la columna 1
+  var llista = new Array();  // Per fer els botons creen una llista buida
+ 
+ 
+  var i = 2;     // Saltem a la 3 columna d'index 2 desprès de la A i la B
+  var p=row[i];  // Carreguem la columna 2 que serà la 3a .
+ 
+ 
+  while(p.length > 4 || p === undefined ) // Fem un bucle per recollir les opcions mentre no hi hagui opció
+    {
+               
+      var p = row[i++];  // Carreguem la següent columna
+ 
+      
+     var frase = p.split('|');  // Separarem la frase del numero de fila a on continua cada separador
+     var etiqueta = frase[0];  // El text quedarà a l'esquerra amb índex 0
+ 
+      
+     var punter = frase[1];  // La fila de continuar quedarà a la dreta amb índex 1
+
+          
+      
+     if(punter == "url")  var linia = {"text" : etiqueta , "url": etiqueta };  // si te url com a punter crearà un botó de tipus url
+      else var linia = {"text" : etiqueta ,  "callback_data": "/assistent " + punter};  // sino creara un botó
+      
+          
+      llista.push([linia]);  // Afegirà el botó a la llista
+    }
+ 
+  if(tipus=="R")  // Si la fila és de tipus "R" afegirà el botó de "Tornar inici" 
+  {
+     llista.push([{"text" : "Tornar Inici ",  "callback_data": "/assistent 1"}]);
+    
+  }
+ 
+ 
+  var tecles =  { inline_keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };  // Prepara botons
+  sendText(id_usuari,enunciat,tecles );   // Envia text i botons
+ 
+}
+
+/*
+5.2.Creació d'un pseudo-assistent 
+Model B.- Estructura temàtica
+*/
+
+function assistent2(id_usuari,text,idioma)
+{
+ var t = text.split(' ');
+ var materia = t[1];
+   
+    
+     
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Assistent2");
+  var dades = sh.getDataRange().getValues();  // Comença a contar els fulls pel 0
+ 
+  var llista = new Array();
+  var materies = new Array();
+ 
+    
+  if(materia !== undefined)
+  {
+ 
+    for( i in dades)  
+    {
+      var row = dades[i];
+     if(row[0] == materia)
+     {
+       llista.push([{"text" : row[1],  "callback_data": "/assistent2b " + i }]);
+     
+     }
+     
+    }    
+    
+  }
+  else
+  {
+   for( i in dades)
+   {
+ 
+     var row = dades[i];
+     if(materies.indexOf(row[0]) == -1) {
+       llista.push([{"text" : row[0],  "callback_data": "/assistent2 " + row[0] }]);
+       materies.push(row[0]);
+     }
+     
+     
+   }
+   
+  }
+ 
+  var tecles =  { inline_keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };
+  sendText(id_usuari,"Selecciona Tema ",tecles );
+
+  return true ;
+ 
+}
+
+
+function assistent2b(id_usuari,text,idioma)
+{
+ var t = text.split(' ');
+ var index = t[1];
+   
+ 
+  var llista = new Array();
+ 
+     
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Assistent2");
+  var dades = sh.getDataRange().getValues();  // Comença a contar els fulls pel 0
+ 
+  var llista = new Array();
+ 
+  var row = dades[index] ;
+  var pregunta = row[1];
+  var resposta = row[2];
+    
+  var frase = "La resposta a la teva pregunta :\n"+ pregunta + " és \n " + resposta + "\n \n";
+ 
+   llista.push([{"text" : "Tornar Inici ",  "callback_data": "/assistent2"}]);
+ 
+  var tecles =  { inline_keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };
+ 
+ 
+  sendText(id_usuari,frase,tecles);
+
+  return true ;
+ 
+}
+
+
+
+/*
+5.1 Insertar un "MediaGroup" al nostre xatbot 
+*/
+
+function sendMediaGroup(id_lloc)
+{
+
+var id_lloc = id_lloc.toString();  // Ho convertim a sring a efectes de que ho hem d'enviar amb format JSON 
+
+var llista = new Array(); 
+
+// Recordeu que patim de les dades d'un fll de càlcul del Drive. Podeu emprar aquest patró 
+
+// : https://docs.google.com/spreadsheets/d/1tyb6a_AblWSnoHBQU1g/edit?usp=sharing 
+
+var dades  = SpreadsheetApp.openById(ssId).getSheetByName("Imatges").getDataRange().getValues();
+var inici = -1; // Perque comenci per 0 
+var final = 10; // Perque acabai amb la 9a image 
+
+for(i in dades)
+{
+if(i>inici && i<final)
+{
+var row = dades[i];  // Llegim la fila de dades 
+var caption = row[3].substring(14) ; // Agafem el text del Caption a partir de la posició 15 per eliminar la frase Imatge_Jornades 
+
+var Foto_recepta = row[5];  // Llegim la url de la foto al Drive i la convertim en externa 
+var url_foto = "https://drive.google.com/uc?export=view&id=";
+var getId = Foto_recepta.toString().split("=");
+var url_foto = url_foto + getId[2];
+
+// Crearem un objecte JSON pr cada imatge amb 3 dades tipus,url i descripcio 
+var item = {
+type : "photo",
+media : url_foto,
+caption : caption
+};
+
+llista.push(item); // afegin l'objecte a una llista per enviar a Telegram 
+}
+
+
+}
+
+
+var payload = {   // Dades en formatJSON per a Telegram 
+method: "sendMediaGroup",
+chat_id : id_lloc,
+media : JSON.stringify(llista)
+
+};
+
+var options = {  // Dades per la tramesa en format POST 
+method: "POST",
+payload: payload,
+muteHttpExceptions : true
+};
+
+
+var request = UrlFetchApp.fetch( telegramUrl + '/', options); //  Enviem les dades a Telegram per visualitzar el grup de imatges 
+
+return true;
+}
+
+
+
+
+
+
+
+function classroom(id)
+{
+  sendText(id,"LLista de cursos");
+ 
+  var lista = new Array();
+  var response = Classroom.Courses.list();
+  var courses = response.courses;  
+ 
+  var i = 0;
+ 
+  sendText(id," Hi han " + courses.length + "cursos"  );
+ 
+    for(i = 0 ; i < courses.length ; i++)
+  {
+   // llista.push([courses[i].name]);
+    lista.push([{"text": courses[i].name , "callback_data": "/clase " + courses[i].id}]);      
+  }
+ 
+      var teclas =  { inline_keyboard: lista    , resize_keyboard: true,one_time_keyboard : true  };
+    sendText(id,"Selecciona curs " , teclas);
+
+ 
+  return true;
+}
+
+function clases(id,curs,idioma)
+{
+var text = curs.split(' ');
+var id_classroom = text[1];   
+ 
+sendText(id,id_classroom);
+ 
+   var resp = Classroom.Courses.CourseWork.list(id_classroom);
+   var work = resp.courseWork
+   
+   
+  if (work && work.length > 0) {
+    for (var i=work.length -1 ; i>= 0 ;  i--) {
+      piece = work[i]
+      var frase = "<b>" +  piece.title + "</b>  \n"+ piece.dueDate.day + "/" + piece.dueDate.month + "/" + piece.dueDate.year + "\n" + "<i>" + piece.description + " </i> \n " ;  
+       sendText(id,escriu_frase(frase,idioma));    
+    }
+  }
+ 
+  return true;
+}
+
+//EVIDÈNCIES
+/*
+
+    Activitat 4.0 .- Incorporar una comanda de Telegram al vostre xatbot 
+    Activitat 4.1 .- Geolocalització : Afegir oipció on_soc a les teves Jornades  
+    Activitat 4.2 .- SVG Creació d'una imatge SVG dinàmica 
+    Activitat 4.3 .- Xatbot de centre : Crea un prototip propi  
+    Activitat 4.4 .- Incorpora Google Calendar 
+    Activitat 4.5 [Opcional] .- Incorpora Google Classroom 
+    Activitat 4.6 [Opcional] .-  Incorpora un bot inline 
+
+*/
+
+function menu_evidencies(id,idioma)
+{
+ var llista = new Array(
+   [{"text": "/audio "}, //Activitat 4.0 .- Incorporar una comanda de Telegram al vostre xatbot 
+    {'text': "/localitzacio" }, //Activitat 4.1 .- Geolocalització : Afegir oipció on_soc a les teves Jornades  
+    {'text': "/orla" }, //Activitat 4.2 .- SVG Creació d'una imatge SVG dinàmica 
+    {'text': "/prototip" }], //Activitat 4.3 .- Xatbot de centre : Crea un prototip propi
+    [{'text': "/agenda" }, //Activitat 4.4 .- Incorpora Google Calendar
+    {'text': "/cursos" }, //Activitat 4.5 [Opcional] .- Incorpora Google Classroom 
+     {'text': "/album" }, //Activitat 4.5 [Opcional] .- Incorpora Google Classroom  trucar(id,idioma)
+     {'text': "/trucar" }, //IFTT
+   ]) ; 
+      
+  var tecles =  { keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };
+ 
+  sendText(id,"Geolocalitzacions",tecles );  
+ 
+}
+
+function menu_prototip(id,idioma)
+{
+ var llista = new Array(
+   [{"text": "/agenda "}, // Calendari d'activitats
+    {'text': "/empreses" }, //Geolocalització : Afegir oipció on_soc les empreses 
+    {'text': "/ofertes_treball" }], //Detall de les ofertes de treball (Filtre per cicle)
+    [{'text': "/jedai" }, //Detall de les jornades JEDAI
+    {'text': "/xarxes_socials" }, //Xarxes socials de l'institut
+   ]) ; 
+      
+  var tecles =  { keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };
+ 
+  sendText(id,"Escull una opció",tecles );  
+ 
+}
+
+
+
+
+
+
+
+
+
+function audio(id_usuari)
+{
+var url = "http://www.sonidosmp3gratis.com/sounds/iphone-notificacion.mp3";
+sendAudio(id_usuari,url,"Efecte notificació");
+
+return true;
+}
+
+
+// El menu_calendari, evia una petició a l'agenda del dia i afegeix per si volem escollir l'agenda de la setmana i del mes
+
+function menu_calendari(id,idioma)
+{
+var res=calendari(id,"/cal dia",idioma);
+   
+var llista = new Array([{"text" : escriu_frase("Dia",idioma) , "callback_data": "/cal dia" },
+                       {"text" : escriu_frase("Setmana",idioma) , "callback_data": "/cal setmana" },
+                       {"text" : escriu_frase("Mes",idioma) , "callback_data": "/cal mes" }])
+                      ; // LLista per escollir el període
+
+               var tecles =  { inline_keyboard : llista    , resize_keyboard: true,one_time_keyboard : true  };  // Asigna la lliista de botons al  keyboard
+               sendText(id, escriu_frase ("Selecciona el periode de l'agenda ",idioma),tecles );  // Envia un missatge a Telegram amb botons per escollir  
+ 
+  return true;  // Torna cert per evitar enviar missatge extra
+}
+
+function calendari(id,text,idioma)
+{
+
+  var id = id || id_grupo ;  // Assignem valor a id en cas de que no existeixi id per activar des de l'activador de rellotge de Google
+  var text = text || "/cal dia" ;  // Assignem paràmetre de temps si no existeix serà agenda del dia
+  var idioma = idioma || "ca";  // Si no existeix idioma asignem català
+   
+ 
+  var p = text.split(' ');  // Analitzem el text per a escollir el període que està separat per un espai
+  var periode = p[1];  // A la dreta de l'espai quedara el període
+ 
+ 
+ 
+  var mesos = new Array("Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre");
+
+  var resultat = "";  // Inicialitzem la variable resultat  
+  var idCal = "classroom113824218817830434821@group.calendar.google.com"; // id del calendario, obtenir a Calendari de Google . Podeu fer servir calendari de Classroom
+  var salt = "\n";  // codi para afegir salts de línea sense codi HTML
+
+   var cal = CalendarApp.getCalendarById(idCal); // Seleccionamos el calendario
+
+   if (!cal) {  // Si el calendari no existeix o no tenim permís
+    sendText(id,escriu_frase("Problemes amb l'agenda",idioma)) ;
+    return true;  // Tornem True, porque s'ha enviat informació
+  }
+
+
+  var ara = new Date();  // Indiquem la data a seleccionar,serà la actual
+
+  ara.setHours(0);  // Iniciem a las 00:00 del dia actual  
+  ara.setMinutes(0);
+    
+  switch(periode)  // Calculem cuants milisegons cal afegir a la data inicial
+  {
+    case 'dia' :
+        temps = 0;
+    break;
+      
+    case 'setmana' :
+      
+       temps = 1000*60*60*24*7;
+    break;
+    
+    case 'mes' :
+       temps = 1000*60*60*24*30 ;
+    break;
+     
+  }
+ 
+  //sendText(id,temps);
+ 
+  sendText(id,escriu_frase("Periode: " + periode ,idioma));
+    
+  var final = new Date(ara.getTime() + temps); // Crearem el final afegint el periodo de temps
+
+  final.setHours(23);  // Imposem las 23:59 del dia final
+  final.setMinutes(59);
+
+  var dia= Utilities.formatDate(final, "GMT", "dd/MM/yyyy-HH:mm:ss")
+     
+  var esdev = cal.getEvents(ara,final); // Carreguem tots els events entre les dues dates
+
+  var numEsdev = esdev.length;  // Quants events hi han?
+
+ sendText(id,"dia = " +dia);
+ sendText(id,"events" + numEsdev);  
+ 
+  for(x=0;x<numEsdev;x++)  // Crearemm un bucle per a tots els events
+
+  {
+   var esdAct =  esdev[x] ; // Seleccionem l'event d'índex x
+   var titol = esdAct.getTitle();  // Títol de l'event
+   var dataIni = esdAct.getStartTime();  // Data d'inici de l'event
+   var dataFi = esdAct.getEndTime();  // Data final de l'event
+   var descri = esdAct.getDescription();  // Descripció de l'event
+
+   var dia = dataIni.getDate() + " de " +  mesos[dataIni.getMonth()] ;     // Donem format al dia
+   var mes = dataIni.getMonth() ;   // seleccionem el mes
+   
+   var ini = dataIni.getHours() + "." + dataIni.getMinutes(); // Hora de inicio
+   var fi = dataFi.getHours() + "." + dataFi.getMinutes(); // Hora final
+ 
+    var horari = "De " + ini + " fins " + fi + " hores " ;  // Donem format a l'hora
+
+   // crearem la sortida de la informació a partir de las variables recopilades  
+    var resul = "[<b>"+ escriu_frase(titol,idioma)  + "</b>]" + salt + "<b>" + dia  +  "</b>"  + salt + escriu_frase(horari,idioma) + salt + "<i>" + escriu_frase(descri,idioma) + "</i>" + salt  ;
+
+    var resultat = resultat + resul ;  // Anem afegint els events a la variable resultat
+     }
+ 
+
+  sendText(id,resultat);  // Enviem la resposta a Telegram
+
+  return true  // Tornem True per haver enviat ja informació
+
+}
+
+function crear_svg(grup)
+{
+
+var grup = grup || "BAT" ; // Si no hem assignat grup fa el de BAT
+
+
+var dades = SpreadsheetApp.openById(ssId).getSheetByName("Alumnes").getDataRange().getValues(); // connectem amb el full de dades dels alumnes
+
+
+var frase = '<?xml version="1.0" encoding="UTF-8"?> \n' +
+            '<svg width="1280" height="960" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> \n'+
+            '<!-- Created with SVG-edit - http://svg-edit.googlecode.com/ --> \n' +
+            '<!-- Generat amb un script creat pel Taller XML  --> \n'+
+            ' <g>  \n'+
+            '<title> Orla Alumnes</title> \n'+
+            '<text transform="matrix(5.34483, 0, 0, 4.05, -2268, -260.267)" xml:space="preserve" text-anchor="middle" font-family="serif" font-size="24" id="titol" y="99.7531" x="546.27959" stroke-width="2" stroke="#0000ff" fill="#000000">' + grup + '</text> \n' ;
+            
+var c = 0; // Compta la columna
+var f= 0; // Compta la fila
+
+for( i in dades)  // fa un bucle per tots els alumnes però filtrara segons siguin del grup indicat
+{
+ var row = dades[i];  // Agafa totes les dades de la la fila i d'alumnes
+ var classe= row[19];  // El grup o classe de l'alumne està a la columna 19
+ if(grup == classe)  // Filtre per la classe
+ {
+ var nom = row[2] + " " + row[3] + " " + row[1];  // Creem els cognoms i el nom de l'alumne
+ var Foto_alumne = row[13];
+ var url_foto = "https://drive.google.com/uc?export=view&id=".replace('&','&amp;');
+ var getId = Foto_alumne.toString().split("=");
+ var url_foto = url_foto + getId[1];  
+ 
+if(url_foto.indexOf('undefined') == -1 )  // Si hi ha foto
+{
+var c= parseInt(c+1); // incrementem la la columna
+if(parseInt(c%7) == 0 ) // si la columna es múltiple de 7 exacte haurem arribat al final de la fila
+{
+var c = 1; //Iniciem la columna
+var f = parseInt(f+1); // incrementem la fila
+}
+
+var posy_i = parseInt(200+(200*f)) ; // calcul de la posició Y esquerra de la foto
+var posx_i = parseInt(182*(c-1)) ;   // calcul de la posició X esquerra
+var posy_t = parseInt(330+(200*f));  // càlcul de la posicio y dreta
+var posx_t = parseInt(posx_i+50) ;  // càlcul dela posició x dreta
+
+
+var frase = frase +
+          '<image xlink:href="' + url_foto + '" id="alumne' + i + '" height="110.000002" width="132.000006"  y="' + posy_i + '" x="' + posx_i +'"/> \n ' +
+          //'<text transform="matrix(1.18627, 0, 0, 1, -5.12255, 0)" xml:space="preserve" text-anchor="middle" font-family="serif" font-size="14" id="svg_' + i +'" y="' + posy_t +'" x="' + posx_t +'" stroke-width="0" stroke="#000000" fill="#000000">' +  nom + '</text> \n' +
+          '<text  xml:space="preserve" text-anchor="middle" font-family="serif" font-size="14" id="svg_' + i +'" y="' + posy_t + '" x="' + posx_t +'" stroke-width="0" stroke="#000000" fill="#000000">' + nom + '</text> \n';
+}
+}
+}
+
+
+var frase = frase + '</g> \n' +   // Afegim el tancament del fitxer
+           ' </svg> \n' ;
+ 
+
+return frase;  // retornem tot erl fitxer SVG que serà enviat a l'exterior
+
+        
+}
+
+
+function orla(id,grup)
+{
+
+var grup = grup || "BAT" ;
+
+var folderId = "1yw6LvZPPKSrDZ";  // Id  d'una carpeta per gravar els fitxers SVG
+
+// Generarem el SVG des d'aquest mateix full de codi GAS  , però ho farem des d'una petició GET amb la url del full
+
+var documentUrl = "https://script.google.com/macros/s/AKfyOJYz2c7/exec?accio=svg&grup="+grup;
+
+  var response = UrlFetchApp.fetch(documentUrl, {followRedirects: true }); // Recuperem el contingut del fitxer
+  folder = DriveApp.getFolderById(folderId);  // Ens situem en la carpeta de les orles
+  var blob = response.getBlob().setName("Orla_" + grup + ".svg") ;  // Carreguem la imatge i assignem nom en funció del grup
+
+  var file = DriveApp.getFolderById(folderId).createFile(blob);  // Creem el fitxer a partir de la informació BLOB
+  var fileId = file.getId();  //  Agafem la ID per general la url
+    
+          var url = "https://drive.google.com/uc?id=" + fileId +"&export=download";   // generem la url del fitxer SVG que hem descarregat i gravat a la nostra carpeta de orles
+
+         sendText(id,"Orla del grup : " + grup + "\n\n" + url);  // Enviem a Telegram le url per poder clicar i visualitzar la imatge SVG de l'orla
+
+return true ;
+
+}
+
+
+
+function on_soc(id,location,idioma)
+{
+
+var lat= location.latitude ;  
+var long = location.longitude ;
+
+  var address1 = "Selva de Mar,211,08020,Barcelona";  // Adreça de les Jornades
+   var map = Maps.newStaticMap().addMarker(address1); // Crea un Mapa static i afegueix una localització a partir de l'adreça
+   map.addMarker(lat,long);  // Podria afegir mes localitzacions al mateix mapa
+  var url_map = map.getMapUrl(); // url del mapa per veure a GoogleMaps pero cal tenir una API-Key i afegir-la a la url
+  var mapa_blob =  map.getBlob(); // Converteix el mapa a dades binaries
+  sendPhoto3(id,mapa_blob,url_map); // Envia la imatge binaria del mapa
+ 
+ var directions = Maps.newDirectionFinder()    // Metode de GoogleMaps per calcular distàncies
+    .setOrigin(lat,long).setDestination(address1)
+    .setMode(Maps.DirectionFinder.Mode.DRIVING)
+    .getDirections();
+
+var d = directions.routes[0].legs[0].distance.text;  // transforma la distancia al format texte 
+var res = parseInt(d.split(" ")[0].replace(",", ""));;    // Escollim la primera part del valor que son els KM
+
+sendText(id," Estas a una distancia de  " + res + " km" );
+
+return true;
+}
+
+function mapa_restaurants(id,idioma)
+{
+ var map = Maps.newStaticMap().addMarker("Via Augusta,202,08021,Barcelona") ;
+ var dades = SpreadsheetApp.openById(ssId).getSheetByName("Restaurants").getDataRange().getValues();  // Llegim dels dades del full
+      
+  for(i in dades)
+  {
+    var row = dades[i];
+    var adresa = row[3]; // Llegim l'adreça del Restaurant
+    var tipus  = row[1];
+    if(tipus=="P")    map.setMarkerStyle(Maps.StaticMap.MarkerSize.MID, Maps.StaticMap.Color.RED,i); //estil del globus
+    else  map.setMarkerStyle(Maps.StaticMap.MarkerSize.MID, Maps.StaticMap.Color.BLUE,i);
+    map.addMarker(adresa);
+  }
+
+ var url_map = map.getMapUrl(); // url del mapa pe rveur een google maps pero cal tenir una API-Key i afegir-la a la url
+  var mapa_blob =  map.getBlob(); // Converteix el mapa a dades binaries
+ sendPhoto3(id,mapa_blob,url_map);
+ 
+ return true;
+}
+
+
+
+function enviar_mapa(id,idioma) {
+  var address1 = "Selva de Mar,211,08020,Barcelona";  // Adreça de les Jornades
+  //var address2 = "Carrer de Ganduxer, 50, 08021 Barcelona";
+  var map = Maps.newStaticMap().addMarker(address1); // Crea un Mapa static i afegueix una localització a partir de l'adreça
+  // map.addMarker(address2);  // Podria afegir mes localitzacions al mateix mapa
+  var url_map = map.getMapUrl(); // url del mapa per veure en Google Maps pero cal tenir una API-Key i afegir-la a la url
+  var mapa_blob =  map.getBlob(); // Converteix el mapa a dades binaries
+  sendPhoto3(id,mapa_blob,"Localització de les Jornades Docents IV ") ;
+  GmailApp.sendEmail('dmoren10@xtec.cat','Mapa, Ubicació', 'Veure Direccions en el Mapa', {attachments:[mapa_blob]});
+ 
+}
+
+
+
+
+function sendLocation(id,lat,long)
+{
+var url = telegramUrl + "/sendLocation?chat_id=" + id + "&latitude=" + lat + "&longitude=" + long ;
+var response = UrlFetchApp.fetch(url);
+Logger.log(response.getContentText());
+}
+
+
+
+function lloc(id_usuari,idioma)
+{
+var lat= 41.416247 ;  
+var long = 2.198957 ;
+
+sendText(id_usuari,escriu_frase("Clica per obrir Google Maps",idioma));
+sendLocation(id_usuari,lat,long);
+return true;
+}
+
+function menu_geo(id,idioma)
+{
+ var llista = new Array(
+   [{"text": "/onsoc ", "request_location": true  },
+    {'text': "/lloc_jornada" }]) ;
+      
+  var tecles =  { keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };
+ 
+  sendText(id,"Geolocalitzacions",tecles );  
+ 
+}
+
+
+function sendAudio(id,audio,caption)
+{
+var url = telegramUrl + "/sendAudio?chat_id=" + id + "&audio=" + audio+"&caption=" + caption ;
+
+var response = UrlFetchApp.fetch(url);
+Logger.log(response.getContentText());
+  
+}
+
+
+
+
+// Funcions per enviar a Telegram 
+
+function sendPhoto(id,foto,caption)
+{
+var url = telegramUrl + "/sendPhoto?chat_id=" + id + "&photo=" + foto+"&caption=" + caption ;
+ 
+  var response = UrlFetchApp.fetch(url);
+  Logger.log(response.getContentText());
+}
+
+function sendDocument(id,fitxer)
+{
+var url = telegramUrl + "/sendDocument?chat_id=" + id + "&document=" + fitxer;
+var response = UrlFetchApp.fetch(url);
+Logger.log(response.getContentText());
+}
+
+function sendDocument2(chatId,id,caption){
+
+  var fileId = id ;
+  var img = DriveApp.getFileById(id);  
+  var blob2 = img.getBlob().getAs("text/plain");
+ 
+
+  var payload = {
+          method: "sendDocument",
+          chat_id: String(chatId),
+          photo: blob2,
+          caption : caption,
+          parse_mode: "HTML"
+          //disable_web_page_preview: true,
+  };
+ 
+  var options = {
+    method: "POST",
+    payload: payload,
+    muteHttpExceptions : true
+  };
+     
+   var request = UrlFetchApp.fetch( telegramUrl + '/', options);
+   Logger.log(request.getContentText());
+ }
+
+
+
+function sendVideo(id,fitxer)
+{
+var url = telegramUrl + "/sendVideo?chat_id=" + id + "&video=" + fitxer;
+var response = UrlFetchApp.fetch(url);
+Logger.log(response.getContentText());
+}
+
+
+function deleteMessage(id,id_missatge)
+{
+var url = telegramUrl + "/deleteMessage?chat_id=" + id + "&message_id=" + id_missatge;
+var response = UrlFetchApp.fetch(url);
+Logger.log(response.getContentText());
+}
+
+
+
+function sendLocation(id,lat,long)
+{
+var url = telegramUrl + "/sendlocation?chat_id=" + id + "&latitude=" + lat + "&longitude=" + long ;
+var response = UrlFetchApp.fetch(url);
+Logger.log(response.getContentText());
+}
+
+
+function getFile(file_id) {
+  var url = telegramUrl + "/getFile?file_id=A...EC";
+  var response = UrlFetchApp.fetch(url);
+   Logger.log(response.getContentText());
+}
+
+
+
+/* Codis HTML permessos per Telegram 
+
+<b> negreta </b>, <strong> negreta </strong>
+<i> cursiva </i>, <em> cursiva </em>
+<u> subratllar </u>, <ins> subratllar </ins>
+<s> strikethrough </s>, <strike> strikethrough </strike>, <del> strikethrough </del>
+<b> negreta <i> cursiva negreta <s> cursiva en negreta en cursiva </s> <u> subratlla en negreta en cursiva </u> </i> negreta </b>
+<a href="http://www.example.com/"> URL en línia </a>
+<a href="tg://user?id=123456789"> esment en línia d'un usuari </a>
+<code> codi d'amplada fixa en línia </code>
+<pre> Bloc de codi de l'amplada fixa preformatat </pre>
+<pre> <code class = "language-python"> bloc de codi preformatat d’amplada fixa escrit en el llenguatge de programació de Python </code> </pre>
+
+*/
+
+
+function sendText(chatId,text,keyBoard){
+  keyBoard = keyBoard || 0;
+
+ 
+  if(keyBoard.inline_keyboard || keyBoard.keyboard){
+     var data = {
+      method: "post",
+      payload: {
+         method: "sendMessage",
+         chat_id: String(chatId),
+         text: text,
+         parse_mode: "HTML",
+         reply_markup: JSON.stringify(keyBoard)
+       }
+     }
+    }else{
+      var data = {
+        method: "post",
+        payload: {
+          method: "sendMessage",
+          chat_id: String(chatId),
+          text: text,
+          parse_mode: "HTML"
+        }
+      }
+    }
+
+   UrlFetchApp.fetch( telegramUrl + '/', data);
+
+ }
+
+
+
+function sendText3(id,text)
+{
+//r url = telegramUrl + "/sendMessage?chat_id=" + id + "&text=" +text +"&parse_mode=html" ;
+ url = telegramUrl + "/sendMessage?chat_id=" + id + "&text=" +text ;
+var response = UrlFetchApp.fetch(url);
+Logger.log(response.getContentText());
+}
+
+
+function sendPhoto2(chatId,id,caption){
+
+  var fileId = id ;
+  var img = DriveApp.getFileById(id);  
+  var blob2 = img.getBlob();
+ 
+
+  var payload = {
+          method: "sendPhoto",
+          chat_id: String(chatId),
+          photo: blob2,
+          caption : caption,
+          parse_mode: "HTML"
+          //disable_web_page_preview: true,
+  };
+ 
+  var options = {
+    method: "POST",
+    payload: payload,
+    muteHttpExceptions : true
+  };
+     
+   var request = UrlFetchApp.fetch( telegramUrl + '/', options);
+   Logger.log(request.getContentText());
+ }
+
+
+function sendPhoto3(chatId,blob2,caption){
+
+  var payload = {
+          method: "sendPhoto",
+          chat_id: String(chatId),
+          photo: blob2,
+          caption : caption,
+          parse_mode: "HTML"
+    
+          //disable_web_page_preview: true,
+  };
+ 
+  var options = {
+    method: "POST",
+    payload: payload,
+    muteHttpExceptions : true
+  };
+     
+   var request = UrlFetchApp.fetch( telegramUrl + '/', options);
+   Logger.log(request.getContentText());
+ }
+
+
+function downloadFile(fileURL,folder) {
+  
+  var fileName = "";
+  var fileSize = 0;
+  
+  var response = UrlFetchApp.fetch(fileURL, {muteHttpExceptions: true});
+  var rc = response.getResponseCode();
+  
+  if (rc == 200) {
+    var fileBlob = response.getBlob()
+    var folder = DocsList.getFolder(folder);
+    if (folder != null) {
+      var file = folder.createFile(fileBlob);
+      fileName = file.getName();
+      fileSize = file.getSize();
+    }
+  }
+    
+  sendText(id,"Gravat");
+}
+
+
+// Fi de funcionsde Telegram 
+
+function doPost(e) {
+  
+  var data = JSON.parse(e.postData.contents); // Assigna les dades pasades per Telegram en format JSON a una variable data 
+
+
+if(data.message)  // En cas de que no fem servir callback 
+{
+  
+var text = data.message.text;  // Recupera el text del missatge 
+var id = data.message.chat.id;  // Recupera el id de la finestra d'on procedeix el missatge 
+var id_usuari = data.message.from.id; // Recupera el id de l'usuari que ha escrit el missatge 
+var id_missatge = data.message.message_id; // Recupera el id del missatge
+var update_id =   data.update_id; // Recupera el id del missatge final 
+var lang = data.message.from.language_code ;  // Recupera l'idioma que te el Telegram de l'usuari que ha enviat el missatge 
+var nom = data.message.from.first_name ;  // Recupera tot el nom de l'usuari que ha enviat el missatge 
+var location = data.message.location; 
+
+}
+  
+if(data.callback_query)
+  {
+  var id_usuari = data.callback_query.from.id; 
+  var id = data.callback_query.message.chat.id;   
+  var id_missatge = data.callback_query.message.message_id; // Recupera el id del missatge
+  var text = data.callback_query.data;
+  var usuari =  data.callback_query.from.user_name; 
+  var nom =  data.callback_query.from.first_name; 
+  var lang =  data.callback_query.from.language_code; 
+  var descTaller =  data.callback_query.data;    // Recollim la data del click del button detall_programació
+
+ }  
+  
+  
+  //  afegir desprès del data.message i del data.callback_query
+/*
+  if(data.message.photo)  // En cas de que enviem una imatge
+{
+var text = data.message.caption;  // Recupera el text de la imatge
+var id = data.message.chat.id;  // Recupera el id de la finestra d'on procedeix el missatge
+var id_usuari = data.message.from.id; // Recupera el id de l'usuari que ha escrit el missatge
+var id_missatge = data.message.message_id; // Recupera el id del missatge
+var update_id =   data.update_id; // Recupera el id del missatge final
+var lang = data.message.from.language_code ;  // Recupera l'idioma que te el Telegram de l'usuari que ha enviat el missatge
+var nom = data.message.from.first_name ;  // Recupera tot el nom de l'usuari que ha enviat el missatge
+var location = data.message.location;
+ 
+ 
+ if(text.indexOf("Imatge_Jornades") > -1 ) { // filtrar que només tracti el que tinguin aquesta etiqueta en la Llegenda
+
+var folderId = "1IZ4xC";  // Id de la carpeta del Drive que recollira les imatges
+ 
+var file_id= data.message.photo[2].file_id;   // Important que indiquem la fila 0 perque es un array una llista
+var url_api_document = telegramUrl + "/getFile?file_id=" + file_id ;  // Demanem a Telegram més informació sobre aquesta imatge, per conèixer la seva url per fer-ne la descarrega
+
+ 
+ 
+  var response_document = UrlFetchApp.fetch(url_api_document);  // Accedeix a la informació de Telegram sobre la imatge
+  var json_document= response_document.getContentText(); // Agafa informació rebuda coma resposta de text
+  var dades2 = JSON.parse(json_document); //Parseja el text rebut
+ 
+  Logger.log(dades2); //Fem un log per detectar problemes
+ 
+  var path_document = dades2.result.file_path;  // Construim la url del document final
+ 
+ 
+ 
+ var documentUrl = "https://api.telegram.org/file/bot" + token + "/" + path_document ; // Accedim a aquest fitxer nviat
+ 
+     var response = UrlFetchApp.fetch(documentUrl, {followRedirects: true }); // Recuperem el contingut del fitxer
+      
+         var folder = DriveApp.getFolderById(folderId);  // Ens situem en la carpeta de fotos de les Jornades
+          var blob = response.getBlob();   // Carreguem la imatge
+          var file = folder.createFile(blob);  // Creem un fitxer amb les dades de la imatge
+                     
+          // file.setName(file_name); //( Posem nom al fitxer
+         var file_name = file.getName() // Mirem quin nom li ha posat
+           
+          var url_fitxer = "https://drive.google.com/uc?export=view&id=" + file.getId();
+          var trobat = true;
+           
+  SpreadsheetApp.openById(ssId).getSheetByName("Imatges").appendRow([new Date(),id_usuari,text,file_name,url_fitxer]);  // Afegim al full de calcul
+ 
+   var enviat = true ; // Perque no envii més missatges
+ 
+  sendText(id, "S'ha guardat a la carpeta del Drive,la imatge enviada. \n " + url_fitxer);  
+    
+ } // fi del filtre "Imatge Jornades"   
+ 
+} // fi del data.message.photo 
+  */
+  
+  
+  var idioma = assigna_idioma(id_usuari,lang); 
+  
+  var enviat = false; 
+  
+  var entrada = text.split('@');  // Separa les paraules entrades en una matriu/array per tenir per una banda la comanda i d'altre els valors 
+  var comanda = entrada[0]; //La comanda serà la primera paraula. Es comença a comptar per zero
+
+  var comanda0 = comanda.split(' '); 
+  var comanda = comanda0[0];
+  var valorComanda = comanda0[1];   
+
+switch(comanda) 
+      {
+        case '/start':   // Fabrica el missatge de benvinguda en l'idioma del Telegram de l'usuari 
+             var resposta = 'Benvingut/Benvinguda al xatbot 2021-2022';  
+        break;
+          
+        case '/ajuda':   
+            var enviat = ajuda(id_usuari,idioma); 
+        break;
+          
+        case '/info':   
+            var enviat = info(id_usuari,idioma); 
+        break;  
+       
+        case '/iden':   
+            var enviat = iden(id_usuari,text,idioma); 
+        break;  
+          
+        case '/tallers' :
+          var enviat = show_tallers(id_usuari,idioma); 
+        break;
+          
+        case '/detall_programacio' :
+          var enviat = show_info_tallers(id_usuari,idioma); 
+        break;
+          
+        case '/entrada':   
+            var enviat = qr(id_usuari,idioma); 
+        break;  
+          
+        case '/idioma' : 
+          var enviat = menu_idioma(id_usuari,idioma); 
+          break; 
+          
+        case  '/idi' : 
+           var enviat = canvia_idioma(id_usuari,text) ; 
+          break; 
+          
+        case  '/descTaller' : 
+           var enviat = detail_taller(id_usuari,valorComanda) ; 
+          break; 
+          
+        case  '/tancar' : //Tanquem el teclat inline
+          deleteMessage(id_usuari,id_missatge);
+          break; 
+          
+           case  '/meteo' : //Mostrem el clima
+          var enviat = meteo(id_usuari,"ca");
+          break; 
+          
+        case  '/ofertes_treball' : //Mostrem les ofertes
+          var enviat = ofertes_treball(id_usuari,text,idioma);
+          break; 
+      
+        case  '/questionari' : //Mostrem un questionari per l'examen
+          var enviat = pregunta(id_usuari);
+          break;  
+          
+        case  '/res' : 
+          var enviat = resultat(id_usuari,text,idioma);
+          break;  
+          
+        case  '/menu' : 
+          var enviat = menu(id_usuari,id);
+          break;
+          
+        case  '/drive' : 
+          var enviat = drive(id,idioma);
+          break;
+          
+        case  '/notes' : 
+          var enviat = notes(id_usuari,idioma);
+          break;
+           
+        case '/audio' :
+          var enviat = audio(id_usuari);
+          break;
+          
+        case '/localitzacio' :
+          var enviat = menu_geo(id,idioma);
+          break;
+          
+        case '/lloc_jornada' :
+          var enviat = lloc(id_usuari,idioma);
+          break;
+          
+        case '/enviar_mapa' :
+          var enviat = enviar_mapa(id,idioma);
+          break; 
+
+        case '/mapa_restaurants' :
+          var enviat = mapa_restaurants(id,idioma);
+          break; 
+          
+        case '/onsoc' :
+          var enviat = on_soc(id,location,idioma);
+          break;  
+         
+        case '/orla' :
+          var enviat = orla(id,"BAT");
+          break; 
+       
+        case '/agenda' :
+          var enviat = menu_calendari(id,idioma);
+          break;  
+          
+        case '/cal' :
+          var enviat = calendari(id,text,idioma);
+          break; 
+          
+        case '/prototip' :
+          var enviat = menu_prototip(id,idioma);
+          break; 
+          
+        case '/evidencies' :
+          var enviat = menu_evidencies(id,idioma);
+          break; 
+          
+           case '/cursos' :
+          var enviat = classroom(id);
+          break;  
+          
+          case '/clase' :
+          var enviat = clases(id,text,idioma);
+          break;  
+          
+        case '/album' : 
+          var enviat = sendMediaGroup(id); 
+          break; 
+          
+        case '/assistent' :
+          var respuesta = assistent(id_usuari,text,idioma);
+          break;
+        case '/assistent2' :
+          var enviat= assistent2(id_usuari,text,idioma);
+          break;
+        case '/assistent2b' :
+          var enviat = assistent2b(id_usuari,text,idioma);
+          break;
+          
+        case '/trucar':
+          var enviat = trucar(id_usuari,idioma);
+          break;
+          
+        default   :
+          var resposta = "No entenc el que em demanes:" + text  ;
+             break;
+    }
+
+  if(enviat != true) sendText(id,resposta);  // Envia la resposta 
+
+}
+
+/*
+Desc: Rep l'id del taller (row) i retorna tota la informació de la fila
+Input: id_taller
+Output: fila del taller
+*/
+function getInfoTaller(id_taller){
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Programa"); 
+  var dades = sh.getDataRange().getValues();
+     
+  var row = dades[id_taller-1];
+  
+  return row;
+}
+
+/*
+Desc: Obté la informació del taller del full de càlcul i mostra la informació
+Input:id usuari, id_taller
+Output: - 
+*/
+function detail_taller(id,id_taller){
+  var dadesTaller = getInfoTaller(id_taller);
+  
+  var  caption = "<b>Taller</b>: " + dadesTaller[3] + "\n" +
+                     "<b>Horari</b>: " + dadesTaller[0] + "\n" +
+                     "<b>Formadors</b>: " +  "<i> " + dadesTaller[4] + "</i> i <i>" + dadesTaller[5] +"</i> \n" +
+                     "<b>Descripció</b>: " + dadesTaller[6] + "\n"; 
+
+  var url_script = dadesTaller[7];
+ 
+  var response = UrlFetchApp.fetch(url_script);
+  var binaryData = response.getContent();
+ 
+  var blob = Utilities.newBlob(binaryData, 'image/jpeg', 'QR');
+  sendPhoto3(id,blob, caption); 
+
+  return true;
+}
+
+/*
+Desc: Mostra un inline_keyboard amb els diferents tallers i en clicar mostra el detall
+Input:id usuari, idioma
+Output: - 
+*/
+function show_info_tallers(id,idioma){
+
+  var llista = new Array(
+   [{"text": escriu_frase("Taller 1 - Robòtica (Arduino)",idioma), "callback_data": "/descTaller 1"},
+    {'text': escriu_frase("Taller 2 - Scratch",idioma), "callback_data" : "/descTaller 2"},
+    {"text": escriu_frase("Taller 3 - Raspberry Pi",idioma),"callback_data" : "/descTaller 3"}],
+   [{"text": escriu_frase("Taller 4 - Lego MindStorms",idioma),"callback_data" : "/descTaller 4"},
+    {"text": escriu_frase("Taller 5 - Python",idioma),"callback_data" : "/descTaller 5"},
+    {"text": escriu_frase("Taller 6 - Metodologia SCRUM",idioma),"callback_data" : "/descTaller 6"}],
+   [{"text": "Tancar","callback_data" : "/tancar" }]) ; 
+  
+  var tecles =  { inline_keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  }; 
+  
+  sendText(id,escriu_frase("Selecciona el taller per veure el seu detall",idioma),tecles);  
+
+  return true;
+  
+}
+
+/*
+Desc: Llista els tallers que s'apuntat l'usuari i els formadors a càrrec de la seva impartició
+Input: id usuari, idioma.
+Output: Frase amb els tallers.
+*/
+function show_tallers(id,idioma){
+  
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants"); 
+  var dades = sh.getDataRange().getValues();  
+  
+  for(i in dades)
+  {
+     var row = dades[i];
+     var num_usuari = row[13]; 
+    
+    if(num_usuari == id) 
+    {
+      var taller1 = row[9];
+      var taller2 = row[10];
+    
+      var frase = "<b> Els teus tallers assignats per les IV Jornades 2020-2021 son: </b> \n\n";
+      
+      var sh2 = SpreadsheetApp.openById(ssId).getSheetByName("Programa"); 
+      var dades_programa = sh2.getDataRange().getValues();  
+      
+      for(j in dades_programa)
+      {
+        var row = dades_programa[j];
+        var nom_taller = row[3];
+        var formador1 = row[4];
+        var formador2 = row[5];
+ 
+        if(nom_taller == taller1 || nom_taller == taller2){
+          frase = frase + nom_taller + " a càrrec de: <i> " + formador1 + "</i> i <i>" + formador2 +"</i> \n";  
+        }
+        
+      }
+    }
+
+  }
+
+  sendText(id,escriu_frase(frase,idioma));
+  return true; 
+}
+
+
+
+
+function doGet(e)
+{
+ var accio = e.parameter.accio; 
+ var id = e.parameter.id; 
+ var text = e.parameter.text;
+  
+   switch (accio)
+    {
+      case 'validar' : 
+          return ContentService.createTextOutput("He rebut acció validar del id = " + id ) ;  
+      break;   
+       case 'grup' : 
+          sendText(id_grup,text);
+          return ContentService.createTextOutput("Envia missatge al grup") ;  
+      break; 
+
+
+
+     }
+}
+
+
+function envia_mis()
+{
+
+var ssId = "1N8" ; //Id del full de calcul
+
+var sh = SpreadsheetApp.openById(ssId) ; // identifica el full de càlcul
+var sheet = sh.getSheets(); // Agafa totas els fulls
+var dades = sheet[1].getDataRange().getValues(); // Agafa nomes el subfull segon de index 1
+
+var ultim = sheet[1].getDataRange().getLastRow(); // Localitzem la posició de la última fila
+var fila = dades[ultim-1]; // Carreguem la ultiam fila en una fila de treball
+
+var timestamp = fila[0]; // Agafem la priemra columna d'index 0 que porta l'hora de gravació
+var nom = fila[1]; // Agafem el nom de l'usuari a la columna 2 index 1
+var cognoms = fila[2]; // Agafem els cognoms de l'usuari a la columna 3 index 2
+var nif = fila[4]; // Agafem el nif de l'usuari a la columna 4 index 3
+var mail = fila[5]; // Agafem el email del usuari a la columan 5 index 4
+var franja1 = fila[9]; // Agafem el taller de la franja1  a la columna 9 index 8
+var franja2 = fila[10]; // Agafem el taller de la franja2  a la columna 10 index 9
+
+
+var url_script = "https://script.google.com/macros/s/AKfycbw7514zBPdFCPNjj_NPF0vQL7qbi-EPzinibzFFen8SHO9qhC0/exec" ;
+
+var url_acces= url_script+"?accio=validar%26id=" + ultim ;
+var qr = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl="+ url_acces ;
+ var img = UrlFetchApp
+                         .fetch(qr)
+                         .getBlob()
+                       .setName("img");
+ 
+
+var subject = "Inscripció a les Jornades " ;
+
+var plain_email_body = "Gracies per la teva inscripció  " + nom +" !! ! \n\n " +
+                       "Has formalitzat la teva inscripció a les IV Jornades \n" +
+                       "Els tallers que t'has inscrits són :  \n " +
+                       "   Franja 1 : " + franja1 + "\n" +
+                       "   Franja 2 : " + franja2 + "\n\n\n" +
+                       "Aquest codiQR que t'adjuntem l'hauras de mostrar a l'entradada de les jornadas i als Tellers per validar la teva presencia";
+
+var html_body =       "Gracies per la teva inscripció  " + nom +" <br /><br />" +
+                       "Has formalitzat la teva inscripció a les III Jornades <br />" +
+                       "Els tallers que t'has inscrits són :  <br />" +
+                       "   Franja 1 : " + franja1 + "<br/>" +
+                       "   Franja 2 : " + franja2 + "<br /><br /><br />" +
+                       "Aquest codiQR que t'adjuntem l'hauras de mostrar a l'entradada de les jornadas i als Tallers per validar la teva presencia <br />";
+
+var advancedOpts = { name: "Inscripció IV Jornades", htmlBody: html_body ,body: img,attachments: img};
+
+MailApp.sendEmail(mail, subject, plain_email_body, advancedOpts );
+
+}
+
+
+
+
+function ajuda(id,idioma)
+{
+  
+ 
+var frase = " Aquest Xatbot   te com objectiu ajudar-te en el desenvolupament de les <b>IV Jornades Docents </b> " + 
+             "Pots accedir a les comandes del xatbot clicant sobre la '/' i escollint l'opció desitjada \n\n "+ 
+             "Les comandes que pots activar directament son:  \n\n" +  
+             "/ajuda - Informació sobre el bot \n " + 
+             "/info -  Informació sobr eles Jornades \n"+ 
+             "/tallers - Tallers assignats  \n "+
+             "/entrada - Codi QR per entrar o validar-se \n"+ 
+             "/certificat - Certificat d'assistencia  \n " + 
+             "/idioma - Selecciona d'idioma de comunicació del xatot \n " +
+             "/iden - Identificació \n "; 
+  
+
+ sendText(id,escriu_frase(frase,idioma));   
+   
+  return true; 
+     
+}
+
+
+function escriu_frase(frase,idioma)
+{
+
+  if(idioma != "ca") var frase= LanguageApp.translate(frase, 'ca', idioma); // Si els dos idiomes coincideixen dona error, per això excluim fer traducció si l'idioma de l'usuari és el catalè 
+ 
+  return frase ; 
+  
+}
+
+
+
+function info(id_usuari, idioma )
+{
+  
+   var sh = SpreadsheetApp.openById(ssId).getSheetByName("Programa"); 
+   var dades = sh.getDataRange().getValues();  
+ 
+  var frase = "<b> Programa IV Jornades </b> \n\n"; 
+  
+  for(i in dades)
+  {
+    var row = dades[i];
+    var hora = row[0]; 
+    var franja = row[1];
+    var taller = row[2];
+    var programa = row[3];
+    var formador = row[4];
+    
+    frase = frase + hora + " " ;  
+    frase = frase + franja + " " ;
+    frase = frase + "/" + taller + " " ; 
+    frase = frase + "<i>" + programa + "</i>  "; 
+    frase = frase + formador + "\n \n "; 
+  
+   
+  }
+  
+  sendText(id_usuari,escriu_frase(frase,idioma)); 
+  return true ; 
+    
+}
+
+
+
+ function iden(id,text,idioma) 
+{
+  
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants"); 
+  var dades = sh.getDataRange().getValues();  
+ 
+  var trobat = 0;
+ 
+       
+  for(i in dades)
+  {
+    
+    var row = dades[i];
+    var num_usuari = row[13]; 
+    
+    if(num_usuari == id) 
+    {
+      
+      sendText(id,escriu_frase("Ja estas validat",idioma)); 
+      return true; 
+         
+    }
+    
+  }
+  
+ var em = text.split(" "); 
+ var email = em[1];  
+ 
+ 
+    
+  if(email === undefined)  
+  {
+   sendText(id,escriu_frase("Per validar-te escriu /iden seguit del teu email",idioma)); 
+   return true;
+   }
+  
+  for(i in dades)
+  {
+    var row = dades[i];
+    var correu = row[5]; 
+    var nom = row[1]
+    
+    if(correu == email) 
+    {
+    
+       var posicio= +i+1; 
+       sh.getRange(posicio,14).setValue(id);  
+       sh.getRange(posicio,15).setValue(new Date());  
+      
+       var frase = escriu_frase("Moltes gracies ",idioma) + nom + escriu_frase("Estas registrat i identificat a les IV Jornades. Pots veure els teus /tallers ",idioma); 
+       sendText(id,frase); 
+      
+      return true; 
+          
+    }
+    
+  }
+   
+   sendText(id,escriu_frase("No t'he pogut registrar,Revisa el teu email",idioma)); 
+   return true;          
+  
+}
+  
+
+function qr(id_usuari,idioma)
+{
+  
+          
+        var  caption = "Entrada a les IV Jornades"; 
+  
+        var url_script = webAppUrl +"?accio=validar%26id=" + id_usuari ; 
+        var qr = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=" + url_script; 
+       
+            
+       var response = UrlFetchApp.fetch(qr);
+       var binaryData = response.getContent();
+
+        
+         var blob = Utilities.newBlob(binaryData, 'image/jpeg', 'QR');
+         sendPhoto3(id_usuari,blob, caption); 
+       
+        return true;                      
+      
+    
+}
+
+
+function menu_idioma(id,idioma)
+{
+ 
+ var llista = new Array(
+   [{"text": escriu_frase("Castellà",idioma), "callback_data": "/idi es"},
+    {'text': escriu_frase("Català",idioma), "callback_data" : "/idi ca"},
+    {"text": escriu_frase("Basc",idioma),"callback_data" : "/idi eu"}],
+   [{"text": escriu_frase("Anglès",idioma),"callback_data" : "/idi en"},
+    {"text": escriu_frase("Francés",idioma),"callback_data" : "/idi fr"},
+    {"text": "Gallego","callback_data" : "/idi gl"}],
+   [{"text": escriu_frase("Àrab",idioma), "callback_data" : "/idi ar"},
+    {"text": "Tancar","callback_data" : "/tancar"}]) ; 
+  
+  var tecles =  { inline_keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  }; 
+  
+  sendText(id,escriu_frase("Selecciona idioma",idioma),tecles );  
+
+  return true; 
+  
+}
+
+
+function canvia_idioma(id_usuari,text) 
+{
+  
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants"); 
+  var dades = sh.getDataRange().getValues();  
+ 
+ 
+  var entrada = text.split(' ');  // Separa les paraules entrades en una matriu/array per tenir per una banda la comanda i d'altre els valors 
+  var idioma = entrada[1]; 
+  
+  var trobat = 0;
+ 
+      
+  for(i in dades)
+  {
+    var row = dades[i];
+    var num_usuari = row[11];
+    var lang = row[13]; 
+    if(num_usuari == id_usuari) 
+    {
+      var posicio= +i+1; 
+      sh.getRange(posicio,14).setValue(idioma); 
+      sendText(id_usuari,escriu_frase("El nou idioma ara és : "+ idioma , idioma) ); 
+    }
+}
+  
+  return true; 
+  
+}
+
+function assigna_idioma(id,lang)
+{
+    
+  var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants"); 
+  var dades = sh.getDataRange().getValues();  
+      
+  for(i in dades)
+  {
+    var row = dades[i];
+    var num_usuari = row[13]; 
+    var idioma = row[12];
+    if(num_usuari == id) 
+    {
+      
+      return idioma; 
+    }
+    
+  }
+
+  return lang ; 
+
+}
+
+function envia_mis()
+{
+
+var ssId = "1NeEynR" ; //Id del full de calcul
+
+var sh = SpreadsheetApp.openById(ssId) ; // identifica el full de càlcul
+var sheet = sh.getSheets(); // Agafa totas els fulls
+var dades = sheet[1].getDataRange().getValues(); // Agafa nomes el subfull segon de index 1
+
+var ultim = sheet[1].getDataRange().getLastRow(); // Localitzem la posició de la última fila
+var fila = dades[ultim-1]; // Carreguem la ultiam fila en una fila de treball
+
+var timestamp = fila[0]; // Agafem la priemra columna d'index 0 que porta l'hora de gravació
+var nom = fila[1]; // Agafem el nom de l'usuari a la columna 2 index 1
+var cognoms = fila[2]; // Agafem els cognoms de l'usuari a la columna 3 index 2
+var nif = fila[4]; // Agafem el nif de l'usuari a la columna 4 index 3
+var mail = fila[5]; // Agafem el email del usuari a la columan 5 index 4
+var franja1 = fila[9]; // Agafem el taller de la franja1  a la columna 9 index 8
+var franja2 = fila[10]; // Agafem el taller de la franja2  a la columna 10 index 9
+
+
+var url_script = "https://script.google.com/a/macros/xtec.cat/s/AKfycbwBrMLZ/exec" ;
+
+var url_acces= url_script+"?accio=validar%26id=" + ultim ;
+var qr = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl="+ url_acces ;
+ var img = UrlFetchApp
+                         .fetch(qr)
+                         .getBlob()
+                       .setName("img");
+ 
+
+var subject = "Inscripció a les Jornades " ;
+
+var plain_email_body = "Gracies per la teva inscripció  " + nom +" !! ! \n\n " +
+                       "Has formalitzat la teva inscripció a les IV Jornades \n" +
+                       "Els tallers que t'has inscrits són :  \n " +
+                       "   Franja 1 : " + franja1 + "\n" +
+                       "   Franja 2 : " + franja2 + "\n\n\n" +
+                       "Aquest codiQR que t'adjuntem l'hauras de mostrar a l'entradada de les jornadas i als Tellers per validar la teva presencia";
+
+var html_body =       "Gracies per la teva inscripció  " + nom +" <br /><br />" +
+                       "Has formalitzat la teva inscripció a les IV Jornades <br />" +
+                       "Els tallers que t'has inscrits són :  <br />" +
+                       "   Franja 1 : " + franja1 + "<br/>" +
+                       "   Franja 2 : " + franja2 + "<br /><br /><br />" +
+                       "Aquest codiQR que t'adjuntem l'hauras de mostrar a l'entradada de les jornadas i als Tallers per validar la teva presencia <br />";
+
+var advancedOpts = { name: "Inscripció IV Jornades", htmlBody: html_body ,body: img,attachments: img};
+
+MailApp.sendEmail(mail, subject, plain_email_body, advancedOpts );
+
+}
+
+
+  
+ function diploma()
+{
+ 
+  full_Id = "1zhoiq";              // Id del full de càlcul
+  plantilla_Id = "1Q_wLvDnr8";      // Id de la plantilla del certificat     
+  final_Id = "1OEjGJHco7ZLwys";           // Id de la copia de la plantilla
+ 
+  var plantilla = DocumentApp.openById(plantilla_Id);   // Obrim la plantilla
+  var final = DocumentApp.openById(final_Id);       // Obrim la copia de la plantilla
+  var plantilla_paragrafs = plantilla.getBody().getParagraphs();   // Carreguem tots els paràgrafs de la Plantilla
+ 
+  var sh = SpreadsheetApp.openById(full_Id).getSheetByName("Participants");  // Accedim al full de càlcul
+  var dades = sh.getRange(2,1,sh.getLastRow()-1,14).getValues();   // Llegim dels dades de la fila 2, columna 1, fins la ultima fila, columna 14
+    
+ 
+  final.getBody().clear();  // Esborrem la plantilla Final per començar de nou un certificat
+ 
+  dades.forEach(function(r){  // funció que es va repetint per cada fila de dades
+        combinat(r[1],r[2],r[3],plantilla_paragrafs,final );    // Envia les dades a la funció combinat per fer la subtitució
+  })   // fi de la funcio forEach
+    
+}   // fi de la funció diploma
+
+
+
+function combinat(nom,cognoms,nif,plantilla_paragrafs,final)    //funció que fa la substitució
+{
+  plantilla_paragrafs.forEach(function(p){    // per cada paragraf
+    
+    final.getBody().appendParagraph(p               // Es situa en el document copia de plantilla
+                                    .copy()
+                                    .replaceText("{nom}",nom)   // Reemplaça el nom
+                                    .replaceText("{cognoms}",cognoms) //Reemplaça els cognoms
+                                    .replaceText("{nif}",nif) //Reemplaça nif
+                                    );
+  })   // fi de la funció forEach
+ 
+   final.getBody().appendPageBreak();  // Si volem que els certificats estiguin junts en un unic document anem afegint pagines
+ 
+}
+ 
+
+/*
+3.4 .- La nostra aula a Telegram 
+*/
+
+
+function perfil(id_usuari)
+{
+
+var sh = SpreadsheetApp.openById(ssId).getSheetByName("Alumnes");
+  var dades = sh.getDataRange().getValues();  
+      
+  for(i in dades)
+  {  
+ 
+    var row = dades[i];
+    var num_usuari = row[13];
+        
+    if(num_usuari == id_usuari)
+    {
+      return row[19]; // columna que conté els perfils
+      
+    }
+    
+  }
+ 
+  return "";
+}
+
+// funció per mostrar un Menú Keyboard en forma de botons sota de la barra de missatges
+function menu(id_usuari,id)
+{
+ var permisos = perfil(id_usuari);  // Llegim els permisos de lúsuari
+  var llista = new Array() ;  // Creem la llista de botons
+ 
+  llista.push(["CodiQR","Qualificacions","Test"]);  // Afegim aquest 3 botons en una fila per a tothom
+ 
+  if(permisos.indexOf("professor") > -1 )  llista.push(["Llistat"]); // Afegim el botó Llistat només pel professor
+  if(permisos.indexOf("professor") > -1 || permisos.indexOf("delegat") > -1 )  llista.push(["Reunions"]);  // Afegim Reunions per al professor i delegat
+                  
+                  var tecles =  { keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };  // Asigna la lista de botons a la comanda keyboard
+               sendText(id,"Selecciona opció",tecles );  // Envia un missatge a Telegram emparnt la funció sendText()  
+return true;  // retorna cert per a que no s'envii cap altre missatge
+
+
+}
+
+
+//Serveix per rebre paràmetres per mètode get.
+function doGet(e)
+{
+ var accio = e.parameter.accio;
+ var id = e.parameter.id;
+ 
+   switch (accio)
+    {
+      case 'validar' :
+          return ContentService.createTextOutput("He rebut acció validar del id = " + id ) ;  
+      break;    
+     }
+}
+
+
+function envia_mis()
+{
+
+var ssId = "1NeEynR" ; //Id del full de calcul
+
+var sh = SpreadsheetApp.openById(ssId) ; // identifica el full de càlcul
+var sheet = sh.getSheets(); // Agafa totas els fulls
+var dades = sheet[1].getDataRange().getValues(); // Agafa nomes el subfull segon de index 1
+
+var ultim = sheet[1].getDataRange().getLastRow(); // Localitzem la posició de la última fila
+var fila = dades[ultim-1]; // Carreguem la ultiam fila en una fila de treball
+
+var timestamp = fila[0]; // Agafem la priemra columna d'index 0 que porta l'hora de gravació
+var nom = fila[1]; // Agafem el nom de l'usuari a la columna 2 index 1
+var cognoms = fila[2]; // Agafem els cognoms de l'usuari a la columna 3 index 2
+var nif = fila[4]; // Agafem el nif de l'usuari a la columna 4 index 3
+var mail = fila[5]; // Agafem el email del usuari a la columan 5 index 4
+var franja1 = fila[9]; // Agafem el taller de la franja1  a la columna 9 index 8
+var franja2 = fila[10]; // Agafem el taller de la franja2  a la columna 10 index 9
+
+
+var url_script = "https://script.google.com/macros/s/AKfycbw7514zBPdFCPNjj_NPF0vQL7qbi-EPzinibzFFen8SHO9qhC0/exec" ;
+
+var url_acces= url_script+"?accio=validar%26id=" + ultim ;
+var qr = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl="+ url_acces ;
+ var img = UrlFetchApp
+                         .fetch(qr)
+                         .getBlob()
+                       .setName("img");
+ 
+
+var subject = "Inscripció a les Jornades " ;
+
+var plain_email_body = "Gracies per la teva inscripció  " + nom +" !! ! \n\n " +
+                       "Has formalitzat la teva inscripció a les IV Jornades \n" +
+                       "Els tallers que t'has inscrits són :  \n " +
+                       "   Franja 1 : " + franja1 + "\n" +
+                       "   Franja 2 : " + franja2 + "\n\n\n" +
+                       "Aquest codiQR que t'adjuntem l'hauras de mostrar a l'entradada de les jornadas i als Tellers per validar la teva presencia";
+
+var html_body =       "Gracies per la teva inscripció  " + nom +" <br /><br />" +
+                       "Has formalitzat la teva inscripció a les III Jornades <br />" +
+                       "Els tallers que t'has inscrits són :  <br />" +
+                       "   Franja 1 : " + franja1 + "<br/>" +
+                       "   Franja 2 : " + franja2 + "<br /><br /><br />" +
+                       "Aquest codiQR que t'adjuntem l'hauras de mostrar a l'entradada de les jornadas i als Tallers per validar la teva presencia <br />";
+
+var advancedOpts = { name: "Inscripció IV Jornades", htmlBody: html_body ,body: img,attachments: img};
+
+MailApp.sendEmail(mail, subject, plain_email_body, advancedOpts );
+
+}
+
+
+ 
+
+/*
+3.4 .- La nostra aula a Telegram 
+*/
+
+
+function perfil(id_usuari)
+{
+
+var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants");
+  var dades = sh.getDataRange().getValues();  
+      
+  for(i in dades)
+  {  
+ 
+    var row = dades[i];
+    var num_usuari = row[13];
+        
+    if(num_usuari == id_usuari)
+    {
+      sendText(id_usuari,row[19]);
+      return row[19]; // columna que conté els perfils 
+    }
+    
+  }
+ 
+  return "";
+}
+
+// funció per mostrar un Menú Keyboard en forma de botons sota de la barra de missatges
+function menu(id_usuari,id)
+{
+ var permisos = perfil(id_usuari);  // Llegim els permisos de lúsuari
+  var llista = new Array() ;  // Creem la llista de botons
+ 
+  llista.push(["CodiQR","Qualificacions","Test"]);  // Afegim aquest 3 botons en una fila per a tothom
+ 
+  if(permisos.indexOf("professor") > -1 )  llista.push(["Llistat"]); // Afegim el botó Llistat només pel professor
+  if(permisos.indexOf("professor") > -1 || permisos.indexOf("delegat") > -1 )  llista.push(["Reunions"]);  // Afegim Reunions per al professor i delegat
+                  
+                  var tecles =  { keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };  // Asigna la lista de botons a la comanda keyboard
+               sendText(id,"Selecciona opció",tecles );  // Envia un missatge a Telegram emparnt la funció sendText()  
+return true;  // retorna cert per a que no s'envii cap altre missatge
+
+
+}
+
+
+function drive(id,idioma)
+{
+
+//Podem assignar icones a cada tipus de fitxer, trobareu  la llista a https://apps.timwhitlock.info/emoji/tables/unicode
+ 
+ var emoji_audio = "🎧" ;
+ var emoji_texto = "📋";
+ var emoji_imagen = "🌆";
+ var emoji_video = "🎥";
+ var emoji_undefined = "💾";
+  
+ var folderId = "1KbFa0cx5wDQheocw8WUoNOE2-fQHzFsK";
+  
+  var carpeta = DriveApp.getFolderById(folderId);
+ 
+  var llista = new Array();
+
+ 
+  llista.push([{'text': "📂 " + carpeta.getName() , 'url': carpeta.getUrl() }]);
+ 
+ var ficheros = carpeta.getFiles();
+
+  var columna = 0;
+  var fila = new Array();
+ 
+  while (ficheros.hasNext()) {
+
+    var fichero = ficheros.next();
+    var tipo = fichero.getMimeType();
+    var emoji = emoji_undefined;
+    
+    if(tipo.indexOf('image') > -1) var emoji = emoji_imagen;
+    if(tipo.indexOf('text') > -1) var emoji = emoji_texto;
+    if(tipo.indexOf('ogg') > -1) var emoji = emoji_audio;
+    
+
+    
+    if(columna<3) {
+              fila.push({'text': emoji + "  " + fichero.getName() , 'url': fichero.getUrl() });
+              columna++;
+    }
+    else {
+          llista.push(fila);
+          fila = [];
+          fila.push({'text': emoji + "  " + fichero.getName() , 'url': fichero.getUrl() });
+         columna = 1 ;
+        }
+
+  }
+           llista.push(fila); // afegim els fitxers que quedavan sense omplir la ultima fila
+
+          var tecles =  { inline_keyboard: llista    , resize_keyboard: true,one_time_keyboard : true  };
+          
+          sendText(id,"Fitxers Drive",tecles );  
+return true;
+}
+
+
+function notes(id_usuari,idioma)
+{
+
+var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants");
+  var dades = sh.getDataRange().getValues();  
+      
+  for(i in dades)
+  {  
+ 
+    var row = dades[i];
+    var num_usuari = row[13];
+        
+    if(num_usuari == id_usuari)
+    {
+      
+      sendText(id_usuari," La teva qualificació al test és : " + row[18] );
+      return row[18];
+      
+    }
+    
+  }
+ 
+  return "";
+}
+
+function qr(id_usuari,idioma)
+{
+      
+        var  caption = "Entrada a les IV Jornades";
+ 
+        var url_script = webAppUrl +"?accio=validar%26id=" + id_usuari ;
+        var qr = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=" + url_script;
+       
+            
+       var response = UrlFetchApp.fetch(qr);
+       var binaryData = response.getContent();
+
+        
+         var blob = Utilities.newBlob(binaryData, 'image/jpeg', 'QR');
+         sendPhoto3(id_usuari,blob, caption);
+       
+        return true;                      
+      
+    
+}
+
+function validar(id_usuari)
+{
+var sh = SpreadsheetApp.openById(ssId).getSheetByName("Participants");  // Accedim al full de càlcul
+var dades = sh.getDataRange().getValues();  // Llegim dels dades de la fila 2, columna 1, fins la ultima fila, columna 14
+  
+   for(i in dades)  // Cerquem l'usuari a partir del seu id
+  {
+    var row = dades[i];
+    var num_usuari = row[13];
+
+    if(num_usuari == id_usuari)
+    {
+   var entrada =   row[20];  
+   var data_entrada = row[21];
+   var nom = row[1];
+   var cognoms = row[2];
+ 
+  if(entrada.length  <3)
+  {
+    sh.getRange(+i+1,21).setValue("Entrat");  
+    sh.getRange(+i+1,22).setValue(new Date());  
+    return " Entrada correcte pel " + nom + " " + cognoms ;
+    }  
+      else return " Entrada utilitzada pel " + nom + " " + cognoms ;  
+ }
+ }
+   return " Problema amb l'entrada "  ;
+ }
+
+
+
+
+
